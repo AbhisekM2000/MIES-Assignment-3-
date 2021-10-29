@@ -1,5 +1,9 @@
 # MIES-Assignment-3 - NEURAL NETWORK
 
+#### Detailed README can be found below
+I love supporting the **[EFF](https://eff.org)**.
+This is the *[Markdown Guide](https://www.markdownguide.org)*.
+
 #### Directory structure
 ```bash
 .
@@ -21,4 +25,6 @@
 
 #### To run and get the results
 > jupyter-notebook MIES_18EC3AI20_Assignment_3.ipynb
+> 
 > python main.py
+
