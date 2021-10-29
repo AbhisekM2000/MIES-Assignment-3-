@@ -1,6 +1,7 @@
 # MIES-Assignment-3 - NEURAL NETWORK
 
 #### Directory structure
+```bash
 .
 ├── 18EC3AI20_README.pdf
 ├── MIES_18EC3AI20_Assignment_3.ipynb
@@ -16,6 +17,7 @@
 ├── main.py
 ├── nn.py
 └── plots.py
+```
 
 #### To run and get the results
 > jupyter-notebook MIES_18EC3AI20_Assignment_3.ipynb
