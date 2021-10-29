@@ -1,8 +1,7 @@
 # MIES-Assignment-3 - NEURAL NETWORK
 
 #### Detailed README can be found below
-I love supporting the **[EFF](https://eff.org)**.
-This is the *[Markdown Guide](https://www.markdownguide.org)*.
+**[README](/18EC3AI20_README.pdf)**.
 
 #### Directory structure
 ```bash
