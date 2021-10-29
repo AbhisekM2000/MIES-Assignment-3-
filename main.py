@@ -1,79 +1,100 @@
 from numpy.core.numeric import correlate
-from nn import Dense_layer
 import pandas as pd
 import numpy as np
-from tqdm import tqdm
+import matplotlib.pyplot as plt
 
+from nn import Dense_layer
+from create_dataset import split_dataset
+from plots import scatter_plot, scatter_plot_normalized
+
+'''
+We plot the features with respect to the sex using scatter plot
+'''
 df = pd.read_csv('Snails.csv')
 
+feature_index = {
+    'length': 1,
+    'diameter': 2,
+    'height': 3,
+    'whole-weight': 4,
+    'shucked-weight': 5,
+    'viscera-weight': 6,
+    'shell-weight': 7,
+    'rings': 8
+}
 
-def splitData(data, split_ratio=[0.50, 0.50]):
-    train = data.sample(frac=split_ratio[0])
-    val = data.drop(train.index)
-    return (train, val)
+# We give any two features we want to plot the scatter plot for
+feature_1_column = feature_index['diameter']  # We select 'diameter'
+feature_2_column = feature_index['rings']  # We then select 'rings'
+
+scatter_plot(df, df['sex'], feature_1_column, feature_2_column)
+scatter_plot_normalized(df, df['sex'], feature_1_column, feature_2_column)
 
 
-train, test = splitData(df)
-test.reset_index(inplace=True, drop=True)
-train.reset_index(inplace=True, drop=True)
-gender_dataset_train = train['sex']
-gender_dataset_test = test['sex']
+'''
+We define our model here
 
-train = train.drop('sex', axis=1)
-train = train.drop('Id', axis=1)
-train = train.to_numpy()
-train = (train - train.min(axis=0)) / (train.max(axis=0) - train.min(axis=0))
-
-
-test = test.drop('sex', axis=1)
-test = test.drop('Id', axis=1)
-test = test.to_numpy()
-test = (test - test.min(axis=0)) / (test.max(axis=0) - test.min(axis=0))
-
-Y_train = np.zeros((len(train), 3))
-for i in range(len(train)):
-    if gender_dataset_train[i] == 'M':
-        Y_train[i][0] = 1
-    elif gender_dataset_train[i] == 'F':
-        Y_train[i][1] = 1
-    else:
-        Y_train[i][2] = 1
-
-Y_test = np.zeros((len(test), 3))
-for i in range(len(test)):
-    if gender_dataset_test[i] == 'M':
-        Y_test[i][0] = 1
-    elif gender_dataset_test[i] == 'F':
-        Y_test[i][1] = 1
-    else:
-        Y_test[i][2] = 1
-
+input_features=8
+layer1_nodes=8, since there are 8 nodes in the hidden layer
+output_labels=3, since there are 3 labels, M,F and I
+learning_rate=0.01
+iterations=500
+'''
 neural_net = Dense_layer(input_features=8, layer1_nodes=8,
-                         output_labels=3, learning_rate=0.001, iterations=500)
+                         output_labels=3, learning_rate=0.01, iterations=500)
+train, Y_train, test, Y_test = split_dataset(df, ratio=0.8)
 
-for j in range(500):
+EPOCHS = 500
+loss = []  # Store the loss after each epoch
+accuracy_train = []  # Store the training accuracy after each epoch
+accuracy_test = []  # Store the testing accuracy after each epoch
 
-    loss = neural_net.train(train, Y_train)
-    loss = (0.5*loss)/train.shape[0]
-    if (j+1) % 50 == 0:
-        print(f'The loss after {j+1}th iteration is = {loss}')
+for j in range(EPOCHS):
+    epoch_loss = neural_net.train(train, Y_train)
+    training_accuracy = neural_net.calc_accuracy(train, Y_train)
+    test_accuracy = neural_net.calc_accuracy(test, Y_test)
 
-
-neural_net.forward(train)
-pred = neural_net.activated_output_layer2
-correct = 0
-for i in range(len(train)):
-    if np.where(pred[i] == max(pred[i])) == np.where(Y_train[i] == max(Y_train[i])):
-        correct += 1
-
-print("The training accuracy is = ",correct/len(train))
+    loss.append(epoch_loss)
+    accuracy_train.append(training_accuracy)
+    accuracy_test.append(test_accuracy)
 
 
-neural_net.forward(test)
-pred = neural_net.activated_output_layer2
-correct = 0
-for i in range(len(test)):
-    if np.where(pred[i] == max(pred[i])) == np.where(Y_test[i] == max(Y_test[i])):
-        correct += 1
+'''
+Training accuracy
+In this we pass the training dataset and calculate accuracy
+'''
+print("Training accuracy = ", neural_net.calc_accuracy(train, Y_train))
 
-print("The test accuracy is = ",correct/len(test))
+
+'''
+Test accuracy
+In this we pass the test dataset and calculate accuracy
+'''
+print("Test accuracy = ", neural_net.calc_accuracy(test, Y_test))
+
+
+'''
+We plot the
+1. Loss vs Epoch
+2. Training accuracy vs Epoch
+3. Testing accuracy vs Epoch
+'''
+plt.figure(num=3)
+plt.title("Loss vs Epoch")
+plt.xlabel("Epoch number/iteration")
+plt.ylabel("Normalized Loss")
+plt.plot(loss)
+
+plt.figure(num=4)
+plt.title("Training accuracy vs Epoch")
+plt.xlabel("Epoch number/iteration")
+plt.ylabel("Training accuracy")
+plt.plot(accuracy_train)
+
+
+plt.figure(num=5)
+plt.title("Test accuracy vs Epoch")
+plt.xlabel("Epoch number/iteration")
+plt.ylabel("Test accuracy")
+plt.plot(accuracy_test)
+plt.show()

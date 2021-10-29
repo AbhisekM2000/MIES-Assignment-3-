@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import math
-import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 
 class Dense_layer():
@@ -15,33 +15,29 @@ class Dense_layer():
         self.learning_rate = learning_rate
         self.iterations = iterations
 
-    def sigmoid(self, input):  # Calculates the sigmoid for a given input
+    def sigmoid(self, input):
         return 1/(1+np.exp(-input))
 
-    # Calculates the sigmoid derivative for a given input
     def sigmoid_derivative(self, input):
         return np.exp(-input) / ((1 + np.exp(-input)) ** 2)
 
     def forward(self, input):
         # The below is the output of layer 1 (hidden layer ), first its passed through a linear layer and then sigmoid activated
-        # a1 in the above equation
         self.output_layer1 = np.dot(
             input, self.weights_layer1)+self.bias_layer1
-        self.activated_output_layer1 = self.sigmoid(
-            self.output_layer1)  # z1 in the above equation
+        self.activated_output_layer1 = self.sigmoid(self.output_layer1)
 
         # The below is the output of layer 2, first its passed through a linear layer and then sigmoid activated
-        # a2 in the above equation
         self.output_layer2 = np.dot(
             self.activated_output_layer1, self.weights_layer2)+self.bias_layer2
-        self.activated_output_layer2 = self.sigmoid(
-            self.output_layer2)  # a2 in the above equation
+        self.activated_output_layer2 = self.sigmoid(self.output_layer2)
 
-    def calc_loss(self, predicted_label, actual_label):  # Function to calculate the loss
-        len = predicted_label.shape[0]
-        return (0.5*np.sum(np.square((predicted_label-actual_label))))/len
+        return np.argmax(self.activated_output_layer2)
 
-    def backward(self, input, y_pred, y_actual):  # Function to calculate the derivatives
+    def calc_loss(self, predicted_label, actual_label):
+        return np.sum(np.square((predicted_label-actual_label)))
+
+    def backward(self, input, y_pred, y_actual):
 
         # Calculation of the derivatives of loss
         self.loss_derivative2 = np.multiply(
@@ -60,47 +56,28 @@ class Dense_layer():
             input.shape[0] * \
             (np.sum(self.loss_derivative1, axis=0).reshape(1, 8))
 
-    # In this function we update the parameters
-    # The weights are updates using Batch Gradient descent algorithm
     def update_parameters(self, dW1, db1, dW2, db2):
         self.weights_layer1 -= (self.learning_rate * dW1)
+#         print(self.bias_layer1.shape)
+#         print(db1.shape)
         self.bias_layer1 -= (self.learning_rate*db1)
         self.weights_layer2 -= (self.learning_rate * dW2)
         self.bias_layer2 -= (self.learning_rate*db2)
+        # print("Weights are updated")
 
-    def train(self, input, y_actual):  # Function to train the model
-        self.forward(input)  # We first forward pass
-        # Calculate and store the loss generated
+    def train(self, input, y_actual):
+        self.forward(input)
         loss = self.calc_loss(self.activated_output_layer2, y_actual)
-        # Then we calculate the derivatives from the Loss function
         self.backward(input, self.activated_output_layer2, y_actual)
-        self.update_parameters(self.layer1_weight_derivative, self.layer1_bias_derivative, self.layer2_weight_derivative,
-                               self.layer2_bias_derivative)  # Then we backpropagate and update the model parameters(weights and biases)
+        self.update_parameters(self.layer1_weight_derivative, self.layer1_bias_derivative,
+                               self.layer2_weight_derivative, self.layer2_bias_derivative)
 
         return loss
 
-    def predict(self, input):  # Predicts the label for a given input
-        # We for ward pass the input into the neural network
-        self.forward(input)
-        # find the index with maximum value in the 1x3 numpy vector
-        index = np.argmax(self.activated_output_layer2)
-        if index == 0:
-            return 'M'
-        elif index == 1:
-            return 'F'
+    def check_output(self, input, y_actual):
+        pred_output = self.forward(input)
+        actual_output = np.argmax(y_actual)
+        if actual_output == pred_output:
+            return True
         else:
-            return 'I'
-
-    # Used to calculate accuracy for any given dataset with input as dataset and y_actual as the output actual labels
-    def calc_accuracy(self, input, y_actual):
-        # We for ward pass the input into the neural network
-        self.forward(input)
-        # The last layer gives us the predicted values
-        y_predicted = self.activated_output_layer2
-        correct = 0
-        # We calculate the labels identified correctly by our network
-        for i in range(len(input)):
-            if np.where(y_predicted[i] == max(y_predicted[i])) == np.where(y_actual[i] == max(y_actual[i])):
-                correct += 1
-
-        return (correct/len(input))
+            return False
